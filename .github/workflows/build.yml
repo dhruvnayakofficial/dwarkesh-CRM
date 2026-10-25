@@ -17,17 +17,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.2'
+
       - name: Extract ZIP and Build APK
         run: |
-          unzip -o "*.zip" -d extracted_files
-          PROJECT_DIR=$(find extracted_files -name "settings.gradle" -printf "%h\n" | head -n 1)
+          mkdir -p extracted_files
+          for z in *.zip; do unzip -o "$z" -d extracted_files; done
+          PROJECT_DIR=$(dirname $(find extracted_files -name "settings.gradle" | head -n 1))
           cd "$PROJECT_DIR"
-          chmod +x gradlew || true
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug
-          else
-            gradle assembleDebug
-          fi
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
