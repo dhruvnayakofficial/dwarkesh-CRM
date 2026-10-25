@@ -1,11 +1,11 @@
-name: Build Dwarkesh Enterprise APK
+name: Build Dwarkesh Enterprise V9 APK
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/build.yml'
-      - 'Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip'
+      - 'Dwarkesh_Enterprise_V9_GitHub_APK_Source.zip'
   workflow_dispatch:
 
 permissions:
@@ -23,11 +23,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip || {
+          test -s Dwarkesh_Enterprise_V9_GitHub_APK_Source.zip || {
             echo '::error::Dwarkesh Android source ZIP is missing or empty'; exit 1;
           }
           mkdir -p extracted_files
-          unzip -oq Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip -d extracted_files
+          unzip -oq Dwarkesh_Enterprise_V9_GitHub_APK_Source.zip -d extracted_files
           test -f extracted_files/settings.gradle
           test -f extracted_files/build.gradle
           test -f extracted_files/app/build.gradle
@@ -83,7 +83,8 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: Dwarkesh-Enterprise-V8-APK
+          name: Dwarkesh-Enterprise-V9-APK
           path: extracted_files/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+          
