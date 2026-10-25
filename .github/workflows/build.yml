@@ -1,40 +1,53 @@
-name: Build APK
-
+name: Build Dwarkesh Enterprise APK
 on:
   push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build.yml'
+      - 'Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip'
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up JDK 17
+      - name: Extract Android project
+        run: |
+          set -euo pipefail
+          test -s Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip
+          mkdir -p extracted_files
+          unzip -oq Dwarkesh_Enterprise_V8_GitHub_APK_Source.zip -d extracted_files
+          test -f extracted_files/settings.gradle
+          test -f extracted_files/app/build.gradle
+          test -f extracted_files/app/src/main/AndroidManifest.xml
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.2'
-
-      - name: Extract ZIP and Build APK
+          gradle-version: '8.9'
+      - name: Install Android 35 SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Build APK
+        working-directory: extracted_files
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Verify APK was created
         run: |
-          mkdir -p extracted_files
-          for z in *.zip; do unzip -o "$z" -d extracted_files; done
-          PROJECT_DIR=$(dirname $(find extracted_files -name "settings.gradle" | head -n 1))
-          cd "$PROJECT_DIR"
-          gradle assembleDebug --stacktrace
-
+          test -s extracted_files/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh extracted_files/app/build/outputs/apk/debug/app-debug.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Dwarkesh-PriceList-APK
-          path: "*/build/outputs/apk/debug/.apk"
+          name: Dwarkesh-Enterprise-V8-APK
+          path: extracted_files/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
